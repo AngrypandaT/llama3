@@ -11,6 +11,22 @@ with open(text_path, 'r') as f:
 text_loader = dict(sorted(text_loader.items()))
 video_name = {}
 answer_list = []
+
+def stream_response(generator):
+    buffer = ""
+    for chunk in generator:
+        if 'message' in chunk:
+            buffer += chunk['message']['content']
+            words = buffer.split(" ")
+            # 保留最后一个单词在缓冲区中，因为它可能是不完整的
+            buffer = words.pop() if words[-1] != '' else ""
+            for word in words:
+                if word:  # 过滤掉空字符串
+                    yield word + " "
+    # 输出最后剩余的完整单词
+    if buffer:
+        yield buffer
+
 for item in text_loader:
     for sentence in text_loader[item]:
         sentence = sentence
@@ -22,9 +38,6 @@ for item in text_loader:
             messages=messages,
             stream=True,  # 开启流式响应
         )
-        for chunk in stream:
-            if 'message' in chunk:
-                # print(chunk['message']['content'], end='')
-                answer = chunk['message']['content']
-                answer_list.append(answer)
-                print(answer_list)
+        for word in stream_response(stream):
+            answer_list.append(word.strip())
+            print(answer_list)
