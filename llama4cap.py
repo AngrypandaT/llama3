@@ -19,7 +19,7 @@ for item in text_loader:
         sentence = sentence
         labels = 'Normal,Abuse,Arrest,Arson,Assault, Burglary, Explosion, Fighting, RoadAccidents, Robbery, Shooting, Shoplifting, Stealing, Vandalism'
         messages = [{'role': 'user',
-                     'content': f'we have 14 labels :{labels},please analyze this sentence:{sentence} ,You must answer the category of this sentence using one of the 14 tags, provide only one word answer, without any other answer'}]
+                     'content': f'You have 14 labels :{labels},please analyze this sentence:{sentence} ,You must select the closest label from the labels, provide only one word answer and stop analyze without any other answer, and do not allow the use of words other than those provided with the labels. Keep capitalization consistent with the labels.'}]
         stream = ollama.chat(
             model='llama3:latest',  # 使用你提供的模型名称
             messages=messages,
@@ -30,17 +30,18 @@ for item in text_loader:
         for chunk in stream:
             if 'message' in chunk:
                 buffer += chunk['message']['content']
-                words = buffer.split(" ")
+                words = buffer.split()
                 # 保留最后一个单词在缓冲区中，因为它可能是不完整的
-                buffer = words.pop() if words[-1] != '' else ""
+                buffer = words.pop() if words else ""
                 for word in words:
                     if word:  # 过滤掉空字符串
                         answer_list.append(word.strip())
         # 输出最后剩余的完整单词
-        if buffer:
+        if buffer and not buffer.endswith((' ', '.', ',', '!', '?', ';')):
             answer_list.append(buffer.strip())
     result_dict[item] = answer_list
+    print(answer_list)
     progress_bar.update(1)
 progress_bar.close()
-with open('result.txt', 'w') as f:
+with open('/root/autodl-tmp/ucf_llama3_swin_cap2label.txt', 'w') as f:
         f.write(json.dumps(result_dict, ensure_ascii=False, indent=4))
