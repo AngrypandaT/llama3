@@ -44,4 +44,6 @@ for item in text_loader:
     progress_bar.update(1)
 progress_bar.close()
 with open('/root/autodl-tmp/ucf_llama3_swin_cap2label.txt', 'w') as f:
-        f.write(json.dumps(result_dict, ensure_ascii=False, indent=4))
+    for item, answers in result_dict.items():
+        json_object = json.dumps({item: answers}, ensure_ascii=False)
+        f.write(f"{json_object}\n")
